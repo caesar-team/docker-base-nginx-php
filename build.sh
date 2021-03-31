@@ -1,2 +1,2 @@
 #!/bin/sh
-docker build . -t 4xxi/nginx-php-fpm
+docker build . -t caesarteam/base-nginx-php:7.4

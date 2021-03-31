@@ -1,0 +1,149 @@
+kind: secret
+name: username
+get:
+  path: caesar-team/data/registry
+  name: username
+---
+kind: secret
+name: password
+get:
+  path: caesar-team/data/registry
+  name: password
+---
+kind: secret
+name: repository
+get:
+  path: caesar-team/data/registry
+  name: repo-server
+---
+kind: secret
+name: registry
+get:
+  path: secret/data/registry
+  name: registry
+---
+kind: secret
+name: notifications
+get:
+  path: secret/data/notifications-4xxi
+  name: caesar-builds
+---
+kind: secret
+name: notification_username
+get:
+  path: secret/data/notifications-4xxi
+  name: username
+---
+kind: secret
+name: notification_icon
+get:
+  path: secret/data/notifications-4xxi
+  name: icon_url
+---
+kind: secret
+name: dockerconfig
+get:
+  path: secret/data/docker
+  name: config.json
+---
+kind: pipeline
+type: docker
+name: 4xxi
+
+image_pull_secrets:
+  - dockerconfig
+
+globals:
+  - &confNoSaveBuild
+    dockerfile: Dockerfile
+    repo: plugins/docker
+    tag: fourxxi
+    dry_run: true
+    daemon_off: false
+
+  - &confSaveBuild
+    dockerfile: Dockerfile
+    repo:
+      from_secret: repository
+    tag: ${DRONE_BRANCH}
+    username:
+      from_secret: username
+    password:
+      from_secret: password
+
+  - &stepCheckBuild
+    name: build test
+    image: plugins/docker
+    settings:
+      <<: *confNoSaveBuild
+
+  - &stepMainBuild
+    name: build
+    image: plugins/docker
+    settings:
+      <<: *confSaveBuild
+
+  - &stepTagBuild
+    image: plugins/docker
+    settings:
+      auto_tag: true
+      <<: *confSaveBuild
+
+  - &stepNotifyToSlack
+    name: notify-to-slack
+    image: plugins/slack
+    pull: always
+    settings:
+      webhook:
+        from_secret: notifications
+      channel: caesar-builds
+      username:
+        from_secret: notification_username
+      icon_url:
+        from_secret: notification_icon
+      template: >
+        {{#success build.status}}
+         *Event*: `{{build.event}}` {{build.status}}
+         *Repository*: `{{repo.name}}` to `{{build.branch}}`
+         *Commit*: `{{build.commit}}`
+         *Info*: {{build.number}} build was started {{since build.created}} and executed for {{since build.started}}
+        <{{build.link}}|*Build link*>
+        {{else}}
+         *Event*: `{{build.event}}` {{build.status}}
+         *Repository*: `{{repo.name}}` to `{{build.branch}}`
+         *Commit*: `{{build.commit}}`
+         *Info*: {{build.number}} build was started {{since build.created}} and executed for {{since build.started}}
+        <{{build.link}}|*Build link*>
+        {{/success}}
+
+steps:
+  - <<: *stepCheckBuild
+    when:
+      branch: [feature/*, hotfix/*]
+      event: [push]
+
+  - <<: *stepMainBuild
+    when:
+      branch: [develop, master]
+      event: [push]
+
+  - name: build tag
+    <<: *stepTagBuild
+    when:
+      branch: [master]
+      event: [tag]
+
+  - <<: *stepNotifyToSlack
+    when:
+      status: [success, failure]
+      branch: [develop, master]
+
+trigger:
+  branch:
+    - master
+    - develop
+    - feature/*
+    - hotfix/*
+  event:
+    - tag
+    - push

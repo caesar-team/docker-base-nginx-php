@@ -8,30 +8,41 @@ RUN apk --update add \
     nginx \
     supervisor \
     git \
-    zip
+    zip \
+    gpgme
 
-RUN apk add --no-cache --no-progress --virtual BUILD_DEPS ${PHPIZE_DEPS}
+RUN apk add --no-cache --no-progress --virtual BUILD_DEPS 
 RUN apk add --no-cache --no-progress --virtual BUILD_DEPS_PHP \
     libzip-dev \
-    icu-dev
+    icu-dev \
+    icu-dev \
+    gpgme-dev \
+    libzip-dev \
+    postgresql-dev \
+    rabbitmq-c \
+    rabbitmq-c-dev
 
 RUN docker-php-ext-install \
     intl \
     bcmath\
     opcache \
     zip \
-    sockets
+    sockets \
+    pdo \
+    pdo_pgsql \
+    zip
 
-RUN apk del --no-progress BUILD_DEPS BUILD_DEPS
-# Config part
+RUN pecl install gnupg redis amqp \
+    && docker-php-ext-enable redis amqp
 
+RUN apk del --no-progress BUILD_DEPS BUILD_DEPS_PHP
+# Configure composer:2
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Configure nginx
 COPY config/nginx/nginx.conf /etc/nginx/nginx.conf
-
 # Configure PHP-FPM
 COPY config/php/fpm-pool.conf /usr/local/etc/php-fpm.d/www.conf
 COPY config/php/php.ini /usr/local/etc/php/conf.d/custom.ini
-
 # Configure supervisord
 COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
