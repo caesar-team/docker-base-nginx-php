@@ -124,23 +124,23 @@ steps:
 
   - <<: *stepMainBuild
     when:
-      branch: [develop, master]
+      branch: [develop, main]
       event: [push]
 
   - name: build tag
     <<: *stepTagBuild
     when:
-      branch: [master]
+      branch: [main]
       event: [tag]
 
   - <<: *stepNotifyToSlack
     when:
       status: [success, failure]
-      branch: [develop, master]
+      branch: [develop, main]
 
 trigger:
   branch:
-    - master
+    - main
     - develop
     - feature/*
     - hotfix/*
