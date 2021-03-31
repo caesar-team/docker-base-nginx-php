@@ -11,7 +11,7 @@ RUN apk --update add \
     zip \
     gpgme
 
-RUN apk add --no-cache --no-progress --virtual BUILD_DEPS 
+RUN apk add --no-cache --no-progress --virtual BUILD_DEPS ${PHPIZE_DEPS}
 RUN apk add --no-cache --no-progress --virtual BUILD_DEPS_PHP \
     libzip-dev \
     icu-dev \
@@ -35,7 +35,7 @@ RUN docker-php-ext-install \
 RUN pecl install gnupg redis amqp \
     && docker-php-ext-enable redis amqp
 
-RUN apk del --no-progress BUILD_DEPS BUILD_DEPS_PHP
+RUN apk del --no-progress BUILD_DEPS BUILD_DEPS_PHP ${PHPIZE_DEPS}
 # Configure composer:2
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Configure nginx
