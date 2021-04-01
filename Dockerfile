@@ -1,4 +1,3 @@
-# ---- Based on TrafeX/docker-php-nginx ----
 FROM php:7.4-fpm-alpine AS base
 LABEL Maintainer="Aleksandr Beshkenade <ab@caesar.team>" \
       Description="Lightweight container with Nginx 1.18 & PHP-FPM 7.4 based on Alpine Linux."
