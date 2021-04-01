@@ -14,7 +14,7 @@ kind: secret
 name: repository
 get:
   path: caesar-team/data/registry
-  name: repo-server
+  name: repo-base-nginx-php
 ---
 kind: secret
 name: registry
